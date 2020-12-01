@@ -119,6 +119,22 @@ class Inverse:
         query = {}
         return self._request(method, path, query, private=False)
 
+    def public_markpricekline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None) -> requests.Response:
+        method = 'GET'
+        path = '/v2/public/mark-price-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit
+        }
+        return self._request(method, path, query, private=False)
+
     def private_order_create(
         self,
         side: str=None,
