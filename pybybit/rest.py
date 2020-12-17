@@ -167,23 +167,19 @@ class Inverse:
 
     def private_order_list(
         self,
-        order_id: str=None,
-        order_link_id: str=None,
         symbol: str=None,
-        order: str=None,
-        page: int=None,
+        order_status: str=None,
+        direction: str=None,
         limit: int=None,
-        order_status: str=None) -> requests.Response:
+        cursor: int=None) -> requests.Response:
         method = 'GET'
-        path = '/open-api/order/list'
+        path = '/v2/private/order/list'
         query = {
-            'order_id': order_id,
-            'order_link_id': order_link_id,
             'symbol': symbol,
-            'order': order,
-            'page': page,
+            'order_status': order_status,
+            'direction': direction,
             'limit': limit,
-            'order_status': order_status
+            'cursor': cursor,
         }
         return self._request(method, path, query, private=True)
 
