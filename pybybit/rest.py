@@ -64,11 +64,15 @@ class Inverse:
 
     def public_orderbook_l2(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Orderbook
+        """
         method = 'GET'
         path = '/v2/public/orderBook/L2'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=False)
 
@@ -77,24 +81,32 @@ class Inverse:
         symbol: str=None,
         interval: str=None,
         from_: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Kline
+        """
         method = 'GET'
         path = '/v2/public/kline/list'
         query = {
             'symbol': symbol,
             'interval': interval,
             'from': from_,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=False)
 
     def public_tickers(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Latest Information for Symbol
+        """
         method = 'GET'
         path = '/v2/public/tickers'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=False)
 
@@ -102,21 +114,164 @@ class Inverse:
         self,
         symbol: str=None,
         from_: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Public Trading Records
+        """
         method = 'GET'
         path = '/v2/public/trading-records'
         query = {
             'symbol': symbol,
             'from': from_,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=False)
 
     def public_symbols(
-        self) -> requests.Response:
+        self,
+    ) -> requests.Response:
+        """
+        Query Symbol
+        """
         method = 'GET'
         path = '/v2/public/symbols'
-        query = {}
+        query = {
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_liqrecords(
+        self,
+        symbol: str=None,
+        from_: int=None,
+        limit: int=None,
+        start_time: int=None,
+        end_time: int=None,
+    ) -> requests.Response:
+        """
+        Liquidated Orders
+        """
+        method = 'GET'
+        path = '/v2/public/liq-records'
+        query = {
+            'symbol': symbol,
+            'from': from_,
+            'limit': limit,
+            'start_time': start_time,
+            'end_time': end_time,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_markpricekline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Mark Price Kline
+        """
+        method = 'GET'
+        path = '/v2/public/mark-price-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_indexpricekline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Index Price Kline
+        """
+        method = 'GET'
+        path = '/v2/public/index-price-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_premiumindexkline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Premium Index Kline
+        """
+        method = 'GET'
+        path = '/v2/public/premium-index-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_openinterest(
+        self,
+        symbol: str=None,
+        period: str=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Open Interest
+        """
+        method = 'GET'
+        path = '/v2/public/open-interest'
+        query = {
+            'symbol': symbol,
+            'period': period,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_bigdeal(
+        self,
+        symbol: str=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Latest Big Deal
+        """
+        method = 'GET'
+        path = '/v2/public/big-deal'
+        query = {
+            'symbol': symbol,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_accountratio(
+        self,
+        symbol: str=None,
+        period: str=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Long-Short Ratio
+        """
+        method = 'GET'
+        path = '/v2/public/account-ratio'
+        query = {
+            'symbol': symbol,
+            'period': period,
+            'limit': limit,
+        }
         return self._request(method, path, query, private=False)
 
     def private_order_create(
@@ -131,7 +286,11 @@ class Inverse:
         stop_loss: float=None,
         reduce_only: bool=None,
         close_on_trigger: bool=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Place Active Order
+        """
         method = 'POST'
         path = '/v2/private/order/create'
         query = {
@@ -145,29 +304,29 @@ class Inverse:
             'stop_loss': stop_loss,
             'reduce_only': reduce_only,
             'close_on_trigger': close_on_trigger,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_order_list(
         self,
-        order_id: str=None,
-        order_link_id: str=None,
         symbol: str=None,
-        order: str=None,
-        page: int=None,
+        order_status: str=None,
+        direction: str=None,
         limit: int=None,
-        order_status: str=None) -> requests.Response:
+        cursor: str=None,
+    ) -> requests.Response:
+        """
+        Get Active Order
+        """
         method = 'GET'
-        path = '/open-api/order/list'
+        path = '/v2/private/order/list'
         query = {
-            'order_id': order_id,
-            'order_link_id': order_link_id,
             'symbol': symbol,
-            'order': order,
-            'page': page,
+            'order_status': order_status,
+            'direction': direction,
             'limit': limit,
-            'order_status': order_status
+            'cursor': cursor,
         }
         return self._request(method, path, query, private=True)
 
@@ -175,53 +334,71 @@ class Inverse:
         self,
         symbol: str=None,
         order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Active Order
+        """
         method = 'POST'
         path = '/v2/private/order/cancel'
         query = {
             'symbol': symbol,
             'order_id': order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_order_cancelall(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Active Orders
+        """
         method = 'POST'
         path = '/v2/private/order/cancelAll'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
     def private_order_replace(
         self,
         order_id: str=None,
-        symbol: str=None,
-        p_r_qty: int=None,
-        p_r_price: float=None) -> requests.Response:
-        method = 'POST'
-        path = '/open-api/order/replace'
-        query = {
-            'order_id': order_id,
-            'symbol': symbol,
-            'p_r_qty': p_r_qty,
-            'p_r_price': p_r_price
-        }
-        return self._request(method, path, query, private=True)
-
-    def private_order_search(
-        self,
-        order_id: str=None,
         order_link_id: str=None,
-        symbol: str=None) -> requests.Response:
-        method = 'GET'
-        path = '/v2/private/order'
+        symbol: str=None,
+        p_r_qty: str=None,
+        p_r_price: str=None,
+    ) -> requests.Response:
+        """
+        Replace Active Order
+        """
+        method = 'POST'
+        path = '/v2/private/order/replace'
         query = {
             'order_id': order_id,
             'order_link_id': order_link_id,
-            'symbol': symbol
+            'symbol': symbol,
+            'p_r_qty': p_r_qty,
+            'p_r_price': p_r_price,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order(
+        self,
+        symbol: str=None,
+        order_id: str=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Query Active Order (real-time)
+        """
+        method = 'GET'
+        path = '/v2/private/order'
+        query = {
+            'symbol': symbol,
+            'order_id': order_id,
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
@@ -230,16 +407,20 @@ class Inverse:
         side: str=None,
         symbol: str=None,
         order_type: str=None,
-        qty: int=None,
-        price: float=None,
-        base_price: float=None,
-        stop_px: float=None,
+        qty: str=None,
+        price: str=None,
+        base_price: str=None,
+        stop_px: str=None,
         time_in_force: str=None,
         trigger_by: str=None,
         close_on_trigger: bool=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Place Conditional Order
+        """
         method = 'POST'
-        path = '/open-api/stop-order/create'
+        path = '/v2/private/stop-order/create'
         query = {
             'side': side,
             'symbol': symbol,
@@ -251,29 +432,29 @@ class Inverse:
             'time_in_force': time_in_force,
             'trigger_by': trigger_by,
             'close_on_trigger': close_on_trigger,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_stoporder_list(
         self,
-        stop_order_id: str=None,
-        order_link_id: str=None,
         symbol: str=None,
         stop_order_status: str=None,
-        order: str=None,
-        page: int=None,
-        limit: int=None) -> requests.Response:
+        direction: str=None,
+        limit: int=None,
+        cursor: str=None,
+    ) -> requests.Response:
+        """
+        Get Conditional Order
+        """
         method = 'GET'
-        path = '/open-api/stop-order/list'
+        path = '/v2/private/stop-order/list'
         query = {
-            'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id,
             'symbol': symbol,
             'stop_order_status': stop_order_status,
-            'order': order,
-            'page': page,
-            'limit': limit
+            'direction': direction,
+            'limit': limit,
+            'cursor': cursor,
         }
         return self._request(method, path, query, private=True)
 
@@ -281,113 +462,145 @@ class Inverse:
         self,
         symbol: str=None,
         stop_order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Conditional Order
+        """
         method = 'POST'
-        path = '/open-api/stop-order/cancel'
+        path = '/v2/private/stop-order/cancel'
         query = {
             'symbol': symbol,
             'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_stoporder_cancelall(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Conditional Orders
+        """
         method = 'POST'
         path = '/v2/private/stop-order/cancelAll'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
     def private_stoporder_replace(
         self,
         stop_order_id: str=None,
+        order_link_id: str=None,
         symbol: str=None,
         p_r_qty: int=None,
-        p_r_price: float=None,
-        p_r_trigger_price: float=None) -> requests.Response:
+        p_r_price: str=None,
+        p_r_trigger_price: str=None,
+    ) -> requests.Response:
+        """
+        Replace Conditional Order
+        """
         method = 'POST'
-        path = '/open-api/stop-order/replace'
+        path = '/v2/private/stop-order/replace'
         query = {
             'stop_order_id': stop_order_id,
+            'order_link_id': order_link_id,
             'symbol': symbol,
             'p_r_qty': p_r_qty,
-            'p_r_trigger_price': p_r_trigger_price
+            'p_r_price': p_r_price,
+            'p_r_trigger_price': p_r_trigger_price,
         }
         return self._request(method, path, query, private=True)
 
-    def private_stoporder_search(
+    def private_stoporder(
         self,
         symbol: str=None,
         stop_order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Query Conditional Order (real-time)
+        """
         method = 'GET'
         path = '/v2/private/stop-order'
         query = {
             'symbol': symbol,
             'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_position_list(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        My Position
+        """
         method = 'GET'
         path = '/v2/private/position/list'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
-    def private_changepositionmargin(
+    def private_position_changepositionmargin(
         self,
         symbol: str=None,
-        margin: int=None) -> requests.Response:
+        margin: str=None,
+    ) -> requests.Response:
+        """
+        Change Margin
+        """
         method = 'POST'
-        path = '/position/change-position-margin'
+        path = '/v2/private/position/change-position-margin'
         query = {
             'symbol': symbol,
             'margin': margin,
         }
         return self._request(method, path, query, private=True)
 
-    def private_tradingstop(
+    def private_position_tradingstop(
         self,
         symbol: str=None,
         take_profit: float=None,
         stop_loss: float=None,
         trailing_stop: float=None,
-        new_trailing_active: float=None) -> requests.Response:
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+        new_trailing_active: float=None,
+    ) -> requests.Response:
+        """
+        Set Trading-Stop
+        """
         method = 'POST'
-        path = '/open-api/position/trading-stop'
+        path = '/v2/private/position/trading-stop'
         query = {
             'symbol': symbol,
             'take_profit': take_profit,
             'stop_loss': stop_loss,
             'trailing_stop': trailing_stop,
-            'new_trailing_active': new_trailing_active
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
+            'new_trailing_active': new_trailing_active,
         }
         return self._request(method, path, query, private=True)
 
-    def private_leverage(
-        self) -> requests.Response:
-        method = 'GET'
-        path = '/user/leverage'
-        query = {}
-        return self._request(method, path, query, private=True)
-
-    def private_leverage_save(
+    def private_position_leverage_save(
         self,
         symbol: str=None,
-        leverage: float=None) -> requests.Response:
+        leverage: float=None,
+    ) -> requests.Response:
+        """
+        Set Leverage
+        """
         method = 'POST'
-        path = '/user/leverage/save'
+        path = '/v2/private/position/leverage/save'
         query = {
             'symbol': symbol,
-            'leverage': leverage
+            'leverage': leverage,
         }
         return self._request(method, path, query, private=True)
 
@@ -398,7 +611,11 @@ class Inverse:
         start_time: int=None,
         page: int=None,
         limit: int=None,
-        order: str=None) -> requests.Response:
+        order: str=None,
+    ) -> requests.Response:
+        """
+        User Trade Records
+        """
         method = 'GET'
         path = '/v2/private/execution/list'
         query = {
@@ -407,21 +624,54 @@ class Inverse:
             'start_time': start_time,
             'page': page,
             'limit': limit,
-            'order': order
+            'order': order,
         }
         return self._request(method, path, query, private=True)
 
-    def private_risklimit_list(
-        self) -> requests.Response:
-        method = 'GET'
-        path = '/open-api/wallet/risk-limit/list'
-        query = {}
-        return self._request(method, path, query, private=True)
-
-    def private_risklimit(
+    def private_trade_closedpnl_list(
         self,
         symbol: str=None,
-        risk_id: int=None) -> requests.Response:
+        start_time: int=None,
+        end_time: int=None,
+        exec_type: str=None,
+        page: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Closed Profit and Loss
+        """
+        method = 'GET'
+        path = '/v2/private/trade/closed-pnl/list'
+        query = {
+            'symbol': symbol,
+            'start_time': start_time,
+            'end_time': end_time,
+            'exec_type': exec_type,
+            'page': page,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_wallet_risklimit_list(
+        self,
+    ) -> requests.Response:
+        """
+        Get Risk Limit
+        """
+        method = 'GET'
+        path = '/open-api/wallet/risk-limit/list'
+        query = {
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_wallet_risklimit(
+        self,
+        symbol: str=None,
+        risk_id: int=None,
+    ) -> requests.Response:
+        """
+        Set Risk Limit
+        """
         method = 'POST'
         path = '/open-api/wallet/risk-limit'
         query = {
@@ -430,57 +680,85 @@ class Inverse:
         }
         return self._request(method, path, query, private=True)
 
-    def private_prevfundingrate(
+    def public_funding_prevfundingrate(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Get the Last Funding Rate
+        """
         method = 'GET'
-        path = '/open-api/funding/prev-funding-rate'
+        path = '/v2/public/funding/prev-funding-rate'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=False)
+
+    def private_funding_prevfunding(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        My Last Funding Fee
+        """
+        method = 'GET'
+        path = '/v2/private/funding/prev-funding'
+        query = {
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
-    def private_prevfunding(
+    def private_funding_predictedfunding(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Predicted Funding Rate and My Funding Fee
+        """
         method = 'GET'
-        path = '/open-api/funding/prev-funding'
+        path = '/v2/private/funding/predicted-funding'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
-    def private_predictedfunding(
+    def private_account_apikey(
         self,
-        symbol: str=None) -> requests.Response:
+    ) -> requests.Response:
+        """
+        API Key Info
+        """
         method = 'GET'
-        path = '/open-api/funding/predicted-funding'
+        path = '/v2/private/account/api-key'
         query = {
-            'symbol': symbol
         }
         return self._request(method, path, query, private=True)
 
-    def private_apikey(
-        self) -> requests.Response:
-        method = 'GET'
-        path = '/open-api/api-key'
-        query = {}
-        return self._request(method, path, query, private=True)
-
-    def private_lcp(
-        self) -> requests.Response:
+    def private_account_lcp(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        LCP Info
+        """
         method = 'GET'
         path = '/v2/private/account/lcp'
-        query = {}
+        query = {
+            'symbol': symbol,
+        }
         return self._request(method, path, query, private=True)
 
     def private_wallet_balance(
         self,
-        coin: str=None) -> requests.Response:
+        coin: str=None,
+    ) -> requests.Response:
+        """
+        Get Wallet Balance
+        """
         method = 'GET'
         path = '/v2/private/wallet/balance'
         query = {
-            'coin': coin
+            'coin': coin,
         }
         return self._request(method, path, query, private=True)
 
@@ -492,9 +770,13 @@ class Inverse:
         coin: str=None,
         wallet_fund_type: str=None,
         page: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Wallet Fund Records
+        """
         method = 'GET'
-        path = '/open-api/wallet/fund/records'
+        path = '/v2/private/wallet/fund/records'
         query = {
             'start_date': start_date,
             'end_date': end_date,
@@ -502,7 +784,7 @@ class Inverse:
             'coin': coin,
             'wallet_fund_type': wallet_fund_type,
             'page': page,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=True)
 
@@ -513,31 +795,63 @@ class Inverse:
         coin: str=None,
         status: str=None,
         page: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Withdraw Records
+        """
         method = 'GET'
-        path = '/open-api/wallet/withdraw/list'
+        path = '/v2/private/wallet/withdraw/list'
         query = {
             'start_date': start_date,
             'end_date': end_date,
             'coin': coin,
             'status': status,
             'page': page,
-            'limit': limit
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_exchangeorder_list(
+        self,
+        limit: int=None,
+        from_: int=None,
+        direction: str=None,
+    ) -> requests.Response:
+        """
+        Asset Exchange Records
+        """
+        method = 'GET'
+        path = '/v2/private/exchange-order/list'
+        query = {
+            'limit': limit,
+            'from': from_,
+            'direction': direction,
         }
         return self._request(method, path, query, private=True)
 
     def public_time(
-        self) -> requests.Response:
+        self,
+    ) -> requests.Response:
+        """
+        Server Time
+        """
         method = 'GET'
         path = '/v2/public/time'
-        query = {}
+        query = {
+        }
         return self._request(method, path, query, private=False)
 
     def public_announcement(
-        self) -> requests.Response:
+        self,
+    ) -> requests.Response:
+        """
+        Announcement
+        """
         method = 'GET'
         path = '/v2/public/announcement'
-        query = {}
+        query = {
+        }
         return self._request(method, path, query, private=False)
 
 class Linear:
@@ -549,36 +863,48 @@ class Linear:
         symbol: str=None,
         interval: str=None,
         from_: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Kline
+        """
         method = 'GET'
         path = '/public/linear/kline'
         query = {
             'symbol': symbol,
             'interval': interval,
             'from': from_,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=False)
 
     def public_recenttradingrecords(
         self,
         symbol: str=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Public Trading Records
+        """
         method = 'GET'
         path = '/public/linear/recent-trading-records'
         query = {
             'symbol': symbol,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=False)
 
-    def public_prevfundingrate(
+    def public_funding_prevfundingrate(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Get the Last Funding Rate
+        """
         method = 'GET'
         path = '/public/linear/funding/prev-funding-rate'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=False)
 
@@ -587,14 +913,58 @@ class Linear:
         symbol: str=None,
         interval: str=None,
         from_: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Mark Price Kline
+        """
         method = 'GET'
         path = '/public/linear/mark-price-kline'
         query = {
             'symbol': symbol,
             'interval': interval,
             'from': from_,
-            'limit': limit
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_indexpricekline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Index Price Kline
+        """
+        method = 'GET'
+        path = '/public/linear/index-price-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit,
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_premiumindexkline(
+        self,
+        symbol: str=None,
+        interval: str=None,
+        from_: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Query Premium Index Kline
+        """
+        method = 'GET'
+        path = '/public/linear/premium-index-kline'
+        query = {
+            'symbol': symbol,
+            'interval': interval,
+            'from': from_,
+            'limit': limit,
         }
         return self._request(method, path, query, private=False)
 
@@ -603,16 +973,20 @@ class Linear:
         side: str=None,
         symbol: str=None,
         order_type: str=None,
-        qty: int=None,
+        qty: float=None,
         price: float=None,
         time_in_force: str=None,
         take_profit: float=None,
         stop_loss: float=None,
-        tp_trigger_by: bool=None,
-        sl_trigger_by: bool=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
         reduce_only: bool=None,
         close_on_trigger: bool=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Place Active Order
+        """
         method = 'POST'
         path = '/private/linear/order/create'
         query = {
@@ -628,7 +1002,7 @@ class Linear:
             'sl_trigger_by': sl_trigger_by,
             'reduce_only': reduce_only,
             'close_on_trigger': close_on_trigger,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
@@ -640,7 +1014,11 @@ class Linear:
         order: str=None,
         page: int=None,
         limit: int=None,
-        order_status: str=None) -> requests.Response:
+        order_status: str=None,
+    ) -> requests.Response:
+        """
+        Get Active Order
+        """
         method = 'GET'
         path = '/private/linear/order/list'
         query = {
@@ -650,7 +1028,7 @@ class Linear:
             'order': order,
             'page': page,
             'limit': limit,
-            'order_status': order_status
+            'order_status': order_status,
         }
         return self._request(method, path, query, private=True)
 
@@ -658,23 +1036,61 @@ class Linear:
         self,
         symbol: str=None,
         order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Active Order
+        """
         method = 'POST'
         path = '/private/linear/order/cancel'
         query = {
             'symbol': symbol,
             'order_id': order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_order_cancelall(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Active Orders
+        """
         method = 'POST'
         path = '/private/linear/order/cancel-all'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order_replace(
+        self,
+        order_id: str=None,
+        order_link_id: str=None,
+        symbol: str=None,
+        p_r_qty: int=None,
+        p_r_price: float=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+    ) -> requests.Response:
+        """
+        Replace Active Order
+        """
+        method = 'POST'
+        path = '/private/linear/order/replace'
+        query = {
+            'order_id': order_id,
+            'order_link_id': order_link_id,
+            'symbol': symbol,
+            'p_r_qty': p_r_qty,
+            'p_r_price': p_r_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -682,13 +1098,17 @@ class Linear:
         self,
         order_id: str=None,
         order_link_id: str=None,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Query Active Order (real-time)
+        """
         method = 'GET'
         path = '/private/linear/order/search'
         query = {
             'order_id': order_id,
             'order_link_id': order_link_id,
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
@@ -697,7 +1117,7 @@ class Linear:
         side: str=None,
         symbol: str=None,
         order_type: str=None,
-        qty: int=None,
+        qty: float=None,
         price: float=None,
         base_price: float=None,
         stop_px: float=None,
@@ -705,7 +1125,15 @@ class Linear:
         trigger_by: str=None,
         close_on_trigger: bool=None,
         order_link_id: str=None,
-        reduce_only: bool=None) -> requests.Response:
+        reduce_only: bool=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+    ) -> requests.Response:
+        """
+        Place Conditional Order
+        """
         method = 'POST'
         path = '/private/linear/stop-order/create'
         query = {
@@ -720,7 +1148,11 @@ class Linear:
             'trigger_by': trigger_by,
             'close_on_trigger': close_on_trigger,
             'order_link_id': order_link_id,
-            'reduce_only': reduce_only
+            'reduce_only': reduce_only,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -732,7 +1164,11 @@ class Linear:
         stop_order_status: str=None,
         order: str=None,
         page: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Get Conditional Order
+        """
         method = 'GET'
         path = '/private/linear/stop-order/list'
         query = {
@@ -742,7 +1178,7 @@ class Linear:
             'stop_order_status': stop_order_status,
             'order': order,
             'page': page,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=True)
 
@@ -750,23 +1186,63 @@ class Linear:
         self,
         symbol: str=None,
         stop_order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Conditional Order
+        """
         method = 'POST'
         path = '/private/linear/stop-order/cancel'
         query = {
             'symbol': symbol,
             'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_stoporder_cancelall(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Conditional Orders
+        """
         method = 'POST'
         path = '/private/linear/stop-order/cancel-all'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_replace(
+        self,
+        stop_order_id: str=None,
+        order_link_id: str=None,
+        symbol: str=None,
+        p_r_qty: int=None,
+        p_r_price: float=None,
+        p_r_trigger_price: float=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+    ) -> requests.Response:
+        """
+        Replace Conditional Order
+        """
+        method = 'POST'
+        path = '/private/linear/stop-order/replace'
+        query = {
+            'stop_order_id': stop_order_id,
+            'order_link_id': order_link_id,
+            'symbol': symbol,
+            'p_r_qty': p_r_qty,
+            'p_r_price': p_r_price,
+            'p_r_trigger_price': p_r_trigger_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -774,97 +1250,97 @@ class Linear:
         self,
         symbol: str=None,
         stop_order_id: str=None,
-        order_link_id: str=None) -> requests.Response:
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Query Conditional Order (real-time)
+        """
         method = 'GET'
         path = '/private/linear/stop-order/search'
         query = {
             'symbol': symbol,
             'stop_order_id': stop_order_id,
-            'order_link_id': order_link_id
+            'order_link_id': order_link_id,
         }
         return self._request(method, path, query, private=True)
 
     def private_position_list(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        My Position
+        """
         method = 'GET'
         path = '/private/linear/position/list'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
-    def private_setautoaddmargin(
+    def private_position_setautoaddmargin(
         self,
         symbol: str=None,
         side: str=None,
-        auto_add_margin: bool=None) -> requests.Response:
+        auto_add_margin: bool=None,
+    ) -> requests.Response:
+        """
+        Set Auto Add Margin
+        """
         method = 'POST'
         path = '/private/linear/position/set-auto-add-margin'
         query = {
             'symbol': symbol,
             'side': side,
-            'auto_add_margin': auto_add_margin
+            'auto_add_margin': auto_add_margin,
         }
         return self._request(method, path, query, private=True)
 
-    def private_setleverage(
-        self,
-        symbol: str=None,
-        buy_leverage: float=None,
-        sell_leverage: float=None) -> requests.Response:
-        method = 'POST'
-        path = '/private/linear/position/set-leverage'
-        query = {
-            'symbol': symbol,
-            'buy_leverage': buy_leverage,
-            'sell_leverage': sell_leverage
-        }
-        return self._request(method, path, query, private=True)
-
-    def private_switchisolated(
+    def private_position_switchisolated(
         self,
         symbol: str=None,
         is_isolated: bool=None,
         buy_leverage: float=None,
-        sell_leverage: float=None) -> requests.Response:
+        sell_leverage: float=None,
+    ) -> requests.Response:
+        """
+        Cross/Isolated Margin Switch
+        """
         method = 'POST'
         path = '/private/linear/position/switch-isolated'
         query = {
             'symbol': symbol,
             'is_isolated': is_isolated,
             'buy_leverage': buy_leverage,
-            'sell_leverage': sell_leverage
+            'sell_leverage': sell_leverage,
         }
         return self._request(method, path, query, private=True)
 
-    def private_tradingstop(
+    def private_tpsl_switchmode(
         self,
         symbol: str=None,
-        side: str=None,
-        take_profit: str=None,
-        stop_loss: str=None,
-        trailing_stop: str=None,
-        tp_trigger_by: str=None,
-        sl_trigger_by: str=None) -> requests.Response:
+        tp_sl_mode: str=None,
+    ) -> requests.Response:
+        """
+        Full/Partial Position SL/TP Switch
+        """
         method = 'POST'
-        path = '/private/linear/position/trading-stop'
+        path = '/private/linear/tpsl/switch-mode'
         query = {
             'symbol': symbol,
-            'side': side,
-            'take_profit': take_profit,
-            'stop_loss': stop_loss,
-            'trailing_stop': trailing_stop,
-            'tp_trigger_by': tp_trigger_by,
-            'sl_trigger_by': sl_trigger_by
+            'tp_sl_mode': tp_sl_mode,
         }
         return self._request(method, path, query, private=True)
 
-    def private_addmargin(
+    def private_position_addmargin(
         self,
         symbol: str=None,
         side: str=None,
-        margin: int=None) -> requests.Response:
+        margin: float=None,
+    ) -> requests.Response:
+        """
+        Add/Reduce Margin
+        """
         method = 'POST'
         path = '/private/linear/position/add-margin'
         query = {
@@ -874,14 +1350,66 @@ class Linear:
         }
         return self._request(method, path, query, private=True)
 
-    def private_execution_list(
+    def private_position_setleverage(
+        self,
+        symbol: str=None,
+        buy_leverage: float=None,
+        sell_leverage: float=None,
+    ) -> requests.Response:
+        """
+        Set Leverage
+        """
+        method = 'POST'
+        path = '/private/linear/position/set-leverage'
+        query = {
+            'symbol': symbol,
+            'buy_leverage': buy_leverage,
+            'sell_leverage': sell_leverage,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_tradingstop(
+        self,
+        symbol: str=None,
+        side: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        trailing_stop: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+        sl_size: float=None,
+        tp_size: float=None,
+    ) -> requests.Response:
+        """
+        Set Trading-Stop
+        """
+        method = 'POST'
+        path = '/private/linear/position/trading-stop'
+        query = {
+            'symbol': symbol,
+            'side': side,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'trailing_stop': trailing_stop,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
+            'sl_size': sl_size,
+            'tp_size': tp_size,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_trade_execution_list(
         self,
         symbol: str=None,
         start_time: int=None,
         end_time: int=None,
         exec_type: str=None,
         page: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        User Trade Records
+        """
         method = 'GET'
         path = '/private/linear/trade/execution/list'
         query = {
@@ -890,18 +1418,22 @@ class Linear:
             'end_time': end_time,
             'exec_type': exec_type,
             'page': page,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=True)
 
-    def private_closedpnl_list(
+    def private_trade_closedpnl_list(
         self,
         symbol: str=None,
         start_time: int=None,
         end_time: int=None,
         exec_type: str=None,
         page: int=None,
-        limit: int=None) -> requests.Response:
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Closed Profit and Loss
+        """
         method = 'GET'
         path = '/private/linear/trade/closed-pnl/list'
         query = {
@@ -910,47 +1442,90 @@ class Linear:
             'end_time': end_time,
             'exec_type': exec_type,
             'page': page,
-            'limit': limit
+            'limit': limit,
         }
         return self._request(method, path, query, private=True)
 
     def public_risklimit(
-        self) -> requests.Response:
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Get Risk Limit
+        """
         method = 'GET'
         path = '/public/linear/risk-limit'
-        query = {}
+        query = {
+            'symbol': symbol,
+        }
         return self._request(method, path, query, private=False)
 
-    def private_prevfunding(
+    def private_position_setrisk(
         self,
-        symbol: str=None) -> requests.Response:
-        method = 'GET'
-        path = '/private/linear/funding/prev-funding'
+        symbol: str=None,
+        side: str=None,
+        risk_id: int=None,
+    ) -> requests.Response:
+        """
+        Set Risk Limit
+        """
+        method = 'POST'
+        path = '/private/linear/position/set-risk'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
+            'side': side,
+            'risk_id': risk_id,
         }
         return self._request(method, path, query, private=True)
 
-    def get_predictedfunding(
+    def private_funding_predictedfunding(
         self,
-        symbol: str=None) -> requests.Response:
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Predicted Funding Rate and My Funding Fee
+        """
         method = 'GET'
         path = '/private/linear/funding/predicted-funding'
         query = {
-            'symbol': symbol
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_funding_prevfunding(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        My Last Funding Fee
+        """
+        method = 'GET'
+        path = '/private/linear/funding/prev-funding'
+        query = {
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
     def public_time(
-        self) -> requests.Response:
+        self,
+    ) -> requests.Response:
+        """
+        Server Time
+        """
         method = 'GET'
         path = '/v2/public/time'
-        query = {}
+        query = {
+        }
         return self._request(method, path, query, private=False)
 
     def public_announcement(
-        self) -> requests.Response:
+        self,
+    ) -> requests.Response:
+        """
+        Announcement
+        """
         method = 'GET'
         path = '/v2/public/announcement'
-        query = {}
+        query = {
+        }
         return self._request(method, path, query, private=False)
