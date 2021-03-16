@@ -11,6 +11,7 @@ class RESTAPI:
         self._callbacks = []
         self.inverse = Inverse(self._request)
         self.linear = Linear(self._request)
+        self.futures = Futures(self._request)
 
     def _prepare(self, method: str, url: str, query: dict, private: bool) -> dict:
         for k in list(query):
@@ -44,18 +45,26 @@ class RESTAPI:
 
     def initialize_request_inverse(self, symbol: str):
         return (
-            self.inverse.private_order_list(symbol=symbol, order_status='New,PartiallyFilled'),
-            self.inverse.private_stoporder_list(symbol=symbol, stop_order_status='Untriggered'),
+            self.inverse.private_order(symbol=symbol),
+            self.inverse.private_stoporder(symbol=symbol),
             self.inverse.private_position_list(symbol=symbol),
-            self.inverse.private_wallet_balance(coin=symbol.replace('USD', '')),
+            self.inverse.private_wallet_balance(),
         )
 
     def initialize_request_linear(self, symbol: str):
         return (
-            self.linear.private_order_list(symbol=symbol, order_status='New'),
-            self.linear.private_stoporder_list(symbol=symbol, stop_order_status='Untriggered'),
+            self.linear.private_order_search(symbol=symbol),
+            self.linear.private_stoporder_search(symbol=symbol),
             self.linear.private_position_list(symbol=symbol),
-            self.inverse.private_wallet_balance(coin='USDT'),
+            self.inverse.private_wallet_balance(),
+        )
+
+    def initialize_request_futures(self, symbol: str):
+        return (
+            self.futures.private_order(symbol=symbol),
+            self.futures.private_stoporder(symbol=symbol),
+            self.futures.private_position_list(symbol=symbol),
+            self.inverse.private_wallet_balance(),
         )
 
 class Inverse:
@@ -654,6 +663,7 @@ class Inverse:
 
     def private_wallet_risklimit_list(
         self,
+        symbol: str=None,
     ) -> requests.Response:
         """
         Get Risk Limit
@@ -661,6 +671,7 @@ class Inverse:
         method = 'GET'
         path = '/open-api/wallet/risk-limit/list'
         query = {
+            'symbol': symbol,
         }
         return self._request(method, path, query, private=True)
 
@@ -1503,6 +1514,460 @@ class Linear:
         path = '/private/linear/funding/prev-funding'
         query = {
             'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def public_time(
+        self,
+    ) -> requests.Response:
+        """
+        Server Time
+        """
+        method = 'GET'
+        path = '/v2/public/time'
+        query = {
+        }
+        return self._request(method, path, query, private=False)
+
+    def public_announcement(
+        self,
+    ) -> requests.Response:
+        """
+        Announcement
+        """
+        method = 'GET'
+        path = '/v2/public/announcement'
+        query = {
+        }
+        return self._request(method, path, query, private=False)
+
+class Futures:
+    def __init__(self, request: RESTAPI._request):
+        self._request = request
+
+    def private_order_create(
+        self,
+        position_idx: int=None,
+        side: str=None,
+        symbol: str=None,
+        order_type: str=None,
+        qty: int=None,
+        price: float=None,
+        time_in_force: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        reduce_only: bool=None,
+        close_on_trigger: bool=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Place Active Order
+        """
+        method = 'POST'
+        path = '/futures/private/order/create'
+        query = {
+            'position_idx': position_idx,
+            'side': side,
+            'symbol': symbol,
+            'order_type': order_type,
+            'qty': qty,
+            'price': price,
+            'time_in_force': time_in_force,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'reduce_only': reduce_only,
+            'close_on_trigger': close_on_trigger,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order_list(
+        self,
+        symbol: str=None,
+        order_status: str=None,
+        direction: str=None,
+        limit: int=None,
+        cursor: str=None,
+    ) -> requests.Response:
+        """
+        Get Active Order
+        """
+        method = 'GET'
+        path = '/futures/private/order/list'
+        query = {
+            'symbol': symbol,
+            'order_status': order_status,
+            'direction': direction,
+            'limit': limit,
+            'cursor': cursor,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order_cancel(
+        self,
+        symbol: str=None,
+        order_id: str=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Active Order
+        """
+        method = 'POST'
+        path = '/futures/private/order/cancel'
+        query = {
+            'symbol': symbol,
+            'order_id': order_id,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order_cancelall(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Active Orders
+        """
+        method = 'POST'
+        path = '/futures/private/order/cancelAll'
+        query = {
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order_replace(
+        self,
+        order_id: str=None,
+        order_link_id: str=None,
+        symbol: str=None,
+        p_r_qty: str=None,
+        p_r_price: str=None,
+    ) -> requests.Response:
+        """
+        Replace Active Order
+        """
+        method = 'POST'
+        path = '/futures/private/order/replace'
+        query = {
+            'order_id': order_id,
+            'order_link_id': order_link_id,
+            'symbol': symbol,
+            'p_r_qty': p_r_qty,
+            'p_r_price': p_r_price,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_order(
+        self,
+        symbol: str=None,
+        order_id: str=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Query Active Order (real-time)
+        """
+        method = 'GET'
+        path = '/futures/private/order'
+        query = {
+            'symbol': symbol,
+            'order_id': order_id,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_create(
+        self,
+        position_idx: int=None,
+        side: str=None,
+        symbol: str=None,
+        order_type: str=None,
+        qty: str=None,
+        price: str=None,
+        base_price: str=None,
+        stop_px: str=None,
+        time_in_force: str=None,
+        trigger_by: str=None,
+        close_on_trigger: bool=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Place Conditional Order
+        """
+        method = 'POST'
+        path = '/futures/private/stop-order/create'
+        query = {
+            'position_idx': position_idx,
+            'side': side,
+            'symbol': symbol,
+            'order_type': order_type,
+            'qty': qty,
+            'price': price,
+            'base_price': base_price,
+            'stop_px': stop_px,
+            'time_in_force': time_in_force,
+            'trigger_by': trigger_by,
+            'close_on_trigger': close_on_trigger,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_list(
+        self,
+        symbol: str=None,
+        stop_order_status: str=None,
+        direction: str=None,
+        limit: int=None,
+        cursor: str=None,
+    ) -> requests.Response:
+        """
+        Get Conditional Order
+        """
+        method = 'GET'
+        path = '/futures/private/stop-order/list'
+        query = {
+            'symbol': symbol,
+            'stop_order_status': stop_order_status,
+            'direction': direction,
+            'limit': limit,
+            'cursor': cursor,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_cancel(
+        self,
+        symbol: str=None,
+        stop_order_id: str=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Cancel Conditional Order
+        """
+        method = 'POST'
+        path = '/futures/private/stop-order/cancel'
+        query = {
+            'symbol': symbol,
+            'stop_order_id': stop_order_id,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_cancelall(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        Cancel All Conditional Orders
+        """
+        method = 'POST'
+        path = '/futures/private/stop-order/cancelAll'
+        query = {
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder_replace(
+        self,
+        stop_order_id: str=None,
+        order_link_id: str=None,
+        symbol: str=None,
+        p_r_qty: int=None,
+        p_r_price: str=None,
+        p_r_trigger_price: str=None,
+    ) -> requests.Response:
+        """
+        Replace Conditional Order
+        """
+        method = 'POST'
+        path = '/futures/private/stop-order/replace'
+        query = {
+            'stop_order_id': stop_order_id,
+            'order_link_id': order_link_id,
+            'symbol': symbol,
+            'p_r_qty': p_r_qty,
+            'p_r_price': p_r_price,
+            'p_r_trigger_price': p_r_trigger_price,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_stoporder(
+        self,
+        symbol: str=None,
+        stop_order_id: str=None,
+        order_link_id: str=None,
+    ) -> requests.Response:
+        """
+        Query Conditional Order (real-time)
+        """
+        method = 'GET'
+        path = '/futures/private/stop-order'
+        query = {
+            'symbol': symbol,
+            'stop_order_id': stop_order_id,
+            'order_link_id': order_link_id,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_list(
+        self,
+        symbol: str=None,
+    ) -> requests.Response:
+        """
+        My Position
+        """
+        method = 'GET'
+        path = '/futures/private/position/list'
+        query = {
+            'symbol': symbol,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_changepositionmargin(
+        self,
+        symbol: str=None,
+        position_idx: int=None,
+        margin: str=None,
+    ) -> requests.Response:
+        """
+        Change Margin
+        """
+        method = 'POST'
+        path = '/futures/private/position/change-position-margin'
+        query = {
+            'symbol': symbol,
+            'position_idx': position_idx,
+            'margin': margin,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_tradingstop(
+        self,
+        symbol: str=None,
+        position_idx: int=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        trailing_stop: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
+        new_trailing_active: float=None,
+    ) -> requests.Response:
+        """
+        Set Trading-Stop
+        """
+        method = 'POST'
+        path = '/futures/private/position/trading-stop'
+        query = {
+            'symbol': symbol,
+            'position_idx': position_idx,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'trailing_stop': trailing_stop,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
+            'new_trailing_active': new_trailing_active,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_leverage_save(
+        self,
+        symbol: str=None,
+        position_idx: int=None,
+        buy_leverage: float=None,
+        sell_leverage: float=None,
+    ) -> requests.Response:
+        """
+        Set Leverage
+        """
+        method = 'POST'
+        path = '/futures/private/position/leverage/save'
+        query = {
+            'symbol': symbol,
+            'position_idx': position_idx,
+            'buy_leverage': buy_leverage,
+            'sell_leverage': sell_leverage,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_switchmode(
+        self,
+        symbol: str=None,
+        mode: int=None,
+    ) -> requests.Response:
+        """
+        Position Mode Switch
+        """
+        method = 'POST'
+        path = '/futures/private/position/switch-mode'
+        query = {
+            'symbol': symbol,
+            'mode': mode,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_switchisolated(
+        self,
+        symbol: str=None,
+        is_isolated: bool=None,
+        buy_leverage: float=None,
+        sell_leverage: float=None,
+    ) -> requests.Response:
+        """
+        Cross/Isolated Margin Switch
+        """
+        method = 'POST'
+        path = '/futures/private/position/switch-isolated'
+        query = {
+            'symbol': symbol,
+            'is_isolated': is_isolated,
+            'buy_leverage': buy_leverage,
+            'sell_leverage': sell_leverage,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_execution_list(
+        self,
+        order_id: str=None,
+        symbol: str=None,
+        start_time: int=None,
+        page: int=None,
+        limit: int=None,
+        order: str=None,
+    ) -> requests.Response:
+        """
+        User Trade Records
+        """
+        method = 'GET'
+        path = '/futures/private/execution/list'
+        query = {
+            'order_id': order_id,
+            'symbol': symbol,
+            'start_time': start_time,
+            'page': page,
+            'limit': limit,
+            'order': order,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_trade_closedpnl_list(
+        self,
+        symbol: str=None,
+        start_time: int=None,
+        end_time: int=None,
+        exec_type: str=None,
+        page: int=None,
+        limit: int=None,
+    ) -> requests.Response:
+        """
+        Closed Profit and Loss
+        """
+        method = 'GET'
+        path = '/futures/private/trade/closed-pnl/list'
+        query = {
+            'symbol': symbol,
+            'start_time': start_time,
+            'end_time': end_time,
+            'exec_type': exec_type,
+            'page': page,
+            'limit': limit,
         }
         return self._request(method, path, query, private=True)
 
