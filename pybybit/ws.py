@@ -47,7 +47,10 @@ class WebScoketAPI:
     def _heartbeat(self, ws: websocket.WebSocket) -> None:
         while True:
             time.sleep(self._HEARTBEAT_SEC)
-            ws.send('{"op":"ping"}')
+            try:
+                ws.send('{"op":"ping"}')
+            except BrokenPipeError:
+                break
 
     def _loop(self, wsurl: str, topics: list) -> None:
         while True:
@@ -61,6 +64,8 @@ class WebScoketAPI:
                 self._onmessage(ws)
             except websocket.WebSocketException:
                 pass
+            except ConnectionResetError:
+                pass
             except KeyboardInterrupt:
                 break
             time.sleep(max(self._MINRECONECT_SEC - (time.time() - t), 0))
@@ -68,7 +73,7 @@ class WebScoketAPI:
     def add_callback(self, func) -> None:
         if callable(func):
             self._callbacks.append(func)
-    
+
     def run_forever_inverse(self, topics: list) -> None:
         wsurl = self._MAINNET_INVERSE if not self._testnet else self._TESTNET_INVERSE
         Thread(target=self._loop, args=[wsurl, topics], daemon=True).start()
