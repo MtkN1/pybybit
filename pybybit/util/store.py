@@ -1,10 +1,12 @@
 import json
+import urllib.parse
+from threading import Event
+from typing import Any, Dict, List, Optional, Union
 from requests import Response, Session
 from websocket import WebSocket
-from typing import Union, List
 
-class DefaultDataStore:
-    def __init__(self):
+class DataStore:
+    def __init__(self) -> None:
         self.orderbook = OrderBook()
         self.trade = Trade()
         self.insurance = Insurance()
@@ -15,40 +17,49 @@ class DefaultDataStore:
         self.order = Order()
         self.stoporder = StopOrder()
         self.wallet = Wallet()
+        self._events: List[Event] = []
 
-    def onresponse(self, resp: Response, session: Session):
-        if any((resp.request.path_url.startswith('/open-api/order/list'),
-                resp.request.path_url.startswith('/private/linear/order/list'))):
-            data = resp.json()
-            if self._checkstatus(resp, data):
-                self.order._onresponse(data['result']['data'])
-        elif any((resp.request.path_url.startswith('/open-api/stop-order/list'),
-                resp.request.path_url.startswith('/private/linear/stop-order/list'))):
-            data = resp.json()
-            if self._checkstatus(resp, data):
-                self.stoporder._onresponse(data['result']['data'])
-        elif any((resp.request.path_url.startswith('/v2/private/position/list'),
-                resp.request.path_url.startswith('/private/linear/position/list'))):
-            data = resp.json()
-            if self._checkstatus(resp, data):
-                self.position._onresponse(data['result'])
-        elif resp.request.path_url.startswith('/v2/private/wallet/balance'):
-            data = resp.json()
-            if self._checkstatus(resp, data):
-                for k, v in data['result'].items():
-                    if k == 'USDT':
-                        self.wallet._onresponse(v)
-                    else:
-                        self.position._onwallet(k ,v)
+    def onresponse(self, resp: Response, session: Session) -> None:
+        content: Dict[str, Any] = resp.json()
+        if content.get('ret_code') == 0:
+            # order
+            if any([
+                resp.request.path_url.startswith('/v2/private/order'),
+                resp.request.path_url.startswith('/private/linear/order/search'),
+                resp.request.path_url.startswith('/futures/private/order'),
+            ]):
+                if isinstance(content['result'], list):
+                    self.order._onresponse(content['result'])
+            # stoporder
+            elif any([
+                resp.request.path_url.startswith('/v2/private/stop-order'),
+                resp.request.path_url.startswith('/private/linear/order/search'),
+                resp.request.path_url.startswith('/futures/private/order'),
+            ]):
+                if isinstance(content['result'], list):
+                    self.stoporder._onresponse(content['result'])
+            # position
+            elif any([
+                resp.request.path_url.startswith('/v2/private/position/list'),
+                resp.request.path_url.startswith('/futures/private/position/list'),
+            ]):
+                self.position.inverse._onresponse(content['result'])
+            elif resp.request.path_url.startswith('/private/linear/position/list'):
+                self.position.linear._onresponse(content['result'])
+            # wallet
+            elif resp.request.path_url.startswith('/v2/private/wallet/balance'):
+                self.wallet._onresponse(content['result'])
 
-    def onmessage(self, msg: str, ws: WebSocket):
-        wsdata = json.loads(msg)
-        if 'topic' in wsdata:
-            topic: str = wsdata['topic']
-            data: Union[list, dict] = wsdata['data']
-            type_: str = wsdata.get('type')
-            if any((topic.startswith('orderBookL2_25'),
-                    topic.startswith('orderBook_200'))):
+    def onmessage(self, msg: str, ws: WebSocket) -> None:
+        content: Dict[str, Any] = json.loads(msg)
+        if 'topic' in content:
+            topic: str = content['topic']
+            data: Union[List[Item], Item] = content['data']
+            type_: Optional[str] = content.get('type')
+            if any([
+                topic.startswith('orderBookL2_25'),
+                topic.startswith('orderBook_200'),
+            ]):
                 self.orderbook._onmessage(type_, data)
             elif topic.startswith('trade'):
                 self.trade._onmessage(data)
@@ -56,313 +67,320 @@ class DefaultDataStore:
                 self.insurance._onmessage(data)
             elif topic.startswith('instrument_info'):
                 self.instrument._onmessage(type_, data)
-            elif any((topic.startswith('klineV2'),
-                      topic.startswith('candle'))):
+            if any([
+                topic.startswith('klineV2'),
+                topic.startswith('candle'),
+            ]):
                 self.kline._onmessage(topic, data)
-            elif topic.startswith('position'):
+            elif topic == 'position':
                 self.position._onmessage(data)
-            elif topic.startswith('execution'):
+                self.wallet._onposition(data)
+            elif topic == 'execution':
                 self.execution._onmessage(data)
-            elif topic.startswith('order'):
+            elif topic == 'order':
                 self.order._onmessage(data)
-            elif topic.startswith('stop_order'):
+            elif topic == 'stop_order':
                 self.stoporder._onmessage(data)
-            elif topic.startswith('wallet'):
+            elif topic == 'wallet':
                 self.wallet._onmessage(data)
+            for event in self._events:
+                event.set()
+            self._events.clear()
 
-    def _checkstatus(self, resp: Response, data: dict) -> bool:
-        return resp.status_code == 200 and data.get('ret_code') == 0
+    def wait(self) -> None:
+        event = Event()
+        self._events.append(event)
+        event.wait()
 
-class OrderBook:
-    def __init__(self):
-        self._data = {}
+class DefaultDataStore(DataStore): ...
+
+Item = Dict[str, Any]
+
+class _KeyValueStore:
+    _KEYS: List[str]
+    _MAXLEN: Optional[int]
+
+    def __init__(self) -> None:
+        self._data: Dict[str, Item] = {}
+        self._events: List[Event] = []
     
-    def getbest(self, symbol: str) -> dict:
-        p = {'Sell': [], 'Buy': []}
-        for item in self._data.values():
-            if item['symbol'] == symbol:
-                p[item['side']].append(float(item['price']))
-        return {'Sell': min(p['Sell']) if p['Sell'] else None,
-                'Buy': max(p['Buy']) if p['Buy'] else None}
+    def get(self, **kwargs) -> Optional[Item]:
+        try:
+            dumps = self._dumps(kwargs)
+            if dumps in self._data:
+                return self._data[dumps]
+        except KeyError:
+            if kwargs:
+                for item in self._data.values():
+                    for k, v, in kwargs.items():
+                        if not k in item:
+                            break
+                        if v != item[k]:
+                            break
+                    else:
+                        return item
+            else:
+                for item in self._data.values():
+                    return item
 
-    def getbook(self, symbol: str) -> dict:
-        b = {'Sell': [], 'Buy': []}
-        for item in self._data.values():
-            if item['symbol'] == symbol:
-                b[item['side']].append(item)
-        b['Sell'].sort(key=lambda x: x['price'])
-        b['Buy'].sort(key=lambda x: x['price'], reverse=True)
-        return b
+    def getlist(self, **kwargs) -> List[Item]:
+        if kwargs:
+            result = []
+            for item in self._data.values():
+                for k, v in kwargs.items():
+                    if not k in item:
+                        break
+                    if v != item[k]:
+                        break
+                else:
+                    result.append(item)
+            return result
+        else:
+            return list(self._data.values())
 
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
+    def __len__(self):
+        return len(self._data)
 
-    def _key(self, item: dict) -> str:
-        symbol = item['symbol']
-        id_ = item['id']
-        return f'{symbol}@{id_}'
-
-    def _onmessage(self, type_: str, data: Union[list, dict]):
-        if type_ == 'snapshot':
-            _data = []
-            if isinstance(data, list):
-                _data.extend(data)
-            elif isinstance(data, dict):
-                _data.extend(data['order_book'])
-            for item in _data:
-                key = self._key(item)
-                self._data[key] = item
-        elif type_ == 'delta':
-            for item in data['delete']:
-                key = self._key(item)
-                if key in self._data:
-                    del self._data[key]
-            for item in data['update']:
-                key = self._key(item)
+    def _dumps(self, item: Item) -> str:
+        keyitem = {k: item[k] for k in self._KEYS}
+        return urllib.parse.urlencode(keyitem)
+    
+    def _update(self, items: List[Item]) -> None:
+        for item in items:
+            try:
+                key = self._dumps(item)
                 if key in self._data:
                     self._data[key].update(item)
                 else:
                     self._data[key] = item
-            for item in data['insert']:
-                key = self._key(item)
-                self._data[key] = item
+            except KeyError:
+                pass
+        if self._MAXLEN is not None:
+            len_data = len(self._data)
+            if len_data > self._MAXLEN:
+                over = len_data - self._MAXLEN
+                keys = []
+                for i, k in enumerate(self._data.keys()):
+                    if i < over:
+                        keys.append(k)
+                    else:
+                        break
+                for k in keys:
+                    self._data.pop(k)
+        for event in self._events:
+            event.set()
+        self._events.clear()
 
-class Trade:
-    _MAX_RECORD = 500000
+    def _pop(self, items: List[Item]) -> None:
+        for item in items:
+            try:
+                key = self._dumps(item)
+                if key in self._data:
+                    self._data.pop(key)
+            except KeyError:
+                pass
+        for event in self._events:
+            event.set()
+        self._events.clear()
 
-    def __init__(self):
-        self._data = []
+    def wait(self) -> None:
+        event = Event()
+        self._events.append(event)
+        event.wait()
 
-    def gettrade(self, symbol: str) -> List[dict]:
-        t = []
-        for item in self._data:
+class OrderBook(_KeyValueStore):
+    _KEYS = ['symbol', 'id', 'side']
+    _MAXLEN = None
+
+    def getbest(self, symbol: str) -> Dict[str, Optional[Item]]:
+        result = {'Sell': {}, 'Buy': {}}
+        for item in self._data.values():
             if item['symbol'] == symbol:
-                t.append(item)
-        return t
+                result[item['side']][float(item['price'])] = item
+        return {
+            'Sell': result['Sell'][min(result['Sell'])] if result['Sell'] else None,
+            'Buy': result['Buy'][max(result['Buy'])] if result['Buy'] else None
+        }
 
-    def getlist(self) -> List[dict]:
-        return list(self._data)
+    def getsorted(self, symbol: str) -> Dict[str, List[Item]]:
+        result = {'Sell': [], 'Buy': []}
+        for item in self._data.values():
+            if item['symbol'] == symbol:
+                result[item['side']].append(item)
+        return {
+            'Sell': sorted(result['Sell'], key=lambda x: float(x['price'])),
+            'Buy': sorted(result['Buy'], key=lambda x: float(x['price']), reverse=True)
+        }
 
-    def _onmessage(self, data: List[dict]):
-        self._data.extend(data)
-        if len(self._data) > self._MAX_RECORD:
-            del self._data[:len(self._data) - self._MAX_RECORD]
-
-class Insurance:
-    def __init__(self):
-        self._data = {}
-
-    def get(self, currency: str) -> dict:
-        return dict(self._data.get(currency))
-
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
-
-    def _key(self, item: dict) -> str:
-        return item['currency']
-
-    def _onmessage(self, data: List[dict]):
-        kv = {item['currency']: item for item in data}
-        self._data.update(kv)
-
-class Instrument:
-    def __init__(self):
-        self._data = {}
-
-    def get(self, symbol: str) -> dict:
-        return dict(self._data.get(symbol))
-    
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
-
-    def _key(self, item: dict) -> str:
-        return item['symbol']
-
-    def _onmessage(self, type_: str, data: dict):
+    def _onmessage(self, type_: str, data: Union[List[Item], Item]) -> None:
         if type_ == 'snapshot':
-            key = self._key(data)
-            self._data[key] = data
+            if isinstance(data, dict):
+                data = data['order_book']
+            self._update(data)
         elif type_ == 'delta':
-            for item in data['update']:
-                key = self._key(item)
-                self._data[key].update(item)
+            self._pop(data['delete'])
+            self._update(data['update'])
+            self._update(data['insert'])
 
-class Kline:
-    _MAX_RECORD = 5000
+class Trade(_KeyValueStore):
+    _KEYS = ['trade_id']
+    _MAXLEN = 10000
 
-    def __init__(self):
-        self._data = {}
+    def _onmessage(self, data: List[Item]) -> None:
+        self._update(data)
 
-    def get(self, symbol: str, start: int) -> dict:
-        return dict(self._data.get(f'{symbol}@{start}'))
+class Insurance(_KeyValueStore):
+    _KEYS = ['currency']
+    _MAXLEN = None
 
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
-    
-    def _key(self, item: dict) -> str:
-        symbol = item['symbol']
-        start = item['start']
-        return f'{symbol}@{start}'
+    def _onmessage(self, data: List[Item]) -> None:
+        self._update(data)
 
-    def _onmessage(self, topic: str, data: List[dict]):
-        symbol = topic.split('.')[-1]
+class Instrument(_KeyValueStore):
+    _KEYS = ['symbol']
+    _MAXLEN = None
+
+    def _onmessage(self, type_: str, data: Item) -> None:
+        if type_ == 'snapshot':
+            self._update([data])
+        elif type_ == 'delta':
+            self._update(data['update'])
+
+class Kline(_KeyValueStore):
+    _KEYS = ['symbol', 'start']
+    _MAXLEN = 5000
+
+    def _onmessage(self, topic: str, data: List[Item]) -> None:
+        symbol = topic.split('.')[2] # ex:'klineV2.1.BTCUSD'
         for item in data:
-            item = {**{'symbol': symbol}, **item}
-            key = self._key(item)
-            if key in self._data:
-                self._data[key].update(item)
-            else:
-                self._data[key] = item
-        while len(self._data) > self._MAX_RECORD:
-            del self._data[next(iter(self._data))]
+            item['symbol'] = symbol
+        self._update(data)
 
 class Position:
     def __init__(self):
-        self._data = {}
-
-    def get(self, symbol: str) -> dict:
-        return dict(self._data.get(symbol))
+        self.inverse = PositionInverse()
+        self.linear = PositionLinear()
     
-    def getboth(self, symbol: str) -> dict:
-        return {'Sell': self._data.get(f'{symbol}@Sell'),
-                'Buy': self._data.get(f'{symbol}@Buy')}
+    def _onmessage(self, data: List[Item]) -> None:
+        if len(data):
+            symbol: str = data[0]['symbol']
+            if symbol.endswith('USDT'):
+                self.linear._onmessage(data)
+            else:
+                self.inverse._onmessage(data)
 
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
+class PositionInverse(_KeyValueStore):
+    _KEYS = ['symbol', 'position_idx']
+    _MAXLEN = None
     
-    def _key(self, item: dict) -> str:
-        if item['symbol'].endswith('USD'):
-            return item['symbol']
-        elif item['symbol'].endswith('USDT'):
-            symbol = item['symbol']
-            side = item['side']
-            return f'{symbol}@{side}'
+    def getone(self, symbol: str) -> Optional[Item]:
+        return self.get(symbol=symbol, position_idx=0)
 
-    def _onwallet(self, coin: str, data: dict):
-        keys = ['wallet_balance', 'available_balance']
-        self._data[f'{coin}USD'].update({k: data[k] for k in keys})
+    def getboth(self, symbol: str) -> Dict[str, Optional[Item]]:
+        return {
+            'Sell': self.get(symbol=symbol, position_idx=2),
+            'Buy': self.get(symbol=symbol, position_idx=1),
+        }
 
-    def _onresponse(self, data: Union[List[dict], dict]):
-        _data = []
+    def _onresponse(self, data: Union[Item, List[Item]]) -> None:
         if isinstance(data, dict):
-            _data.append(data)
+            self._update([data])
         elif isinstance(data, list):
-            _data.extend(data)
-        for item in _data:
-            key = self._key(item)
-            if key in self._data:
-                self._data[key].update(item)
+            if len(data) and 'data' in data[0]:
+                self._update([item['data'] for item in data])
             else:
-                self._data[key] = item
+                self._update(data)
 
-    def _onmessage(self, data: List[dict]):
+    def _onmessage(self, data: List[Item]) -> None:
+        self._update(data)
+
+class PositionLinear(_KeyValueStore):
+    _KEYS = ['symbol', 'side']
+    _MAXLEN = None
+
+    def getboth(self, symbol: str) -> Dict[str, Optional[Item]]:
+        return {
+            'Sell': self.get(symbol=symbol, side='Sell'),
+            'Buy': self.get(symbol=symbol, side='Buy'),
+        }
+
+    def _onresponse(self, data: List[Item]) -> None:
+        if len(data) and 'data' in data[0]:
+            self._update([item['data'] for item in data])
+        else:
+            self._update(data)
+
+    def _onmessage(self, data: List[Item]) -> None:
+        self._update(data)
+
+class Execution(_KeyValueStore):
+    _KEYS = ['exec_id']
+    _MAXLEN = 5000
+
+    def _onmessage(self, data: List[Item]) -> None:
+        self._update(data)
+
+class Order(_KeyValueStore):
+    _KEYS = ['order_id']
+    _MAXLEN = None
+
+    def _onresponse(self, data: List[Item]) -> None:
+        self._update(data)
+
+    def _onmessage(self, data: List[Item]) -> None:
         for item in data:
-            key = self._key(item)
-            if key in self._data:
-                self._data[key].update(item)
+            if item['order_status'] in ('Created', 'New', 'PartiallyFilled', ):
+                self._update([item])
             else:
-                self._data[key] = item
+                self._pop([item])
 
-class Execution:
-    _MAX_RECORD = 5000
+class StopOrder(_KeyValueStore):
+    _KEYS = ['stop_order_id']
+    _MAXLEN = None
 
-    def __init__(self):
-        self._data = []
+    def _onresponse(self, data: List[Item]) -> None:
+        self._update(data)
 
-    def getexecutions(self, symbol: str) -> List[dict]:
-        e = []
-        for item in self._data:
-            if item['symbol'] == symbol:
-                e.append(item)
-        return e
-
-    def getlist(self) -> List[dict]:
-        return list(self._data)
-
-    def _onmessage(self, data: List[dict]):
-        self._data.extend(data)
-        if len(self._data) > self._MAX_RECORD:
-            del self._data[:len(self._data) - self._MAX_RECORD]
-
-class Order:
-    _MAX_RECORD = 5000
-
-    def __init__(self):
-        self._data = {}
-
-    def get(self, symbol: str, order_id: str) -> dict:
-        return dict(self._data.get(f'{symbol}@{order_id}'))
-
-    def getactive(self, symbol: str):
-        return [item for item in self._data.values() if item['symbol'] == symbol and item['order_status'] in ('New', 'PartiallyFilled')]
-
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
-
-    def _key(self, item: dict) -> str:
-        symbol = item['symbol']
-        order_id = item['order_id']
-        return f'{symbol}@{order_id}'
-
-    def _onresponse(self, data: List[dict]):
-        if data is not None:
-            self._onmessage(data)
-
-    def _onmessage(self, data: List[dict]):
-        for item in data:
-            key = self._key(item)
-            if key in self._data:
-                self._data[key].update(item)
-            else:
-                self._data[key] = item
-        while len(self._data) > self._MAX_RECORD:
-            del self._data[next(iter(self._data))]
-
-class StopOrder:
-    def __init__(self):
-        self._data = {}
-
-    def get(self, symbol: str, stop_order_id: str) -> dict:
-        return dict(self._data.get(f'{symbol}@{stop_order_id}'))
-
-    def getactive(self, symbol: str):
-        return [item for item in self._data.values() if item['symbol'] == symbol and item['stop_order_status'] in ('Untriggered', )]
-
-    def getlist(self) -> List[dict]:
-        return list(self._data.values())
-    
-    def _key(self, item: dict) -> str:
-        symbol = item['symbol']
-        stop_order_id = item['stop_order_id']
-        return f'{symbol}@{stop_order_id}'
-
-    def _onresponse(self, data: List[dict]):
-        if data is not None:
-            self._onmessage(data)
-
-    def _onmessage(self, data: List[dict]):
+    def _onmessage(self, data: List[Item]) -> None:
         for item in data:
             if 'order_id' in item:
                 item['stop_order_id'] = item.pop('order_id')
             if 'order_status' in item:
                 item['stop_order_status'] = item.pop('order_status')
-            key = self._key(item)
-            if key in self._data:
-                self._data[key].update(item)
+            if item['stop_order_status'] in ('Active', 'Untriggered', ):
+                self._update([item])
             else:
-                self._data[key] = item
+                self._pop([item])
 
-class Wallet:
-    def __init__(self):
-        self._data = {}
+class Wallet(_KeyValueStore):
+    _KEYS = ['coin']
+    _MAXLEN = None
 
-    def get(self) -> dict:
-        return dict(self._data)
+    def _onresponse(self, data: Dict[str, Item]) -> None:
+        for coin, item in data.items():
+            _item = {}
+            _item['coin'] = coin
+            _item['wallet_balance'] = item['wallet_balance']
+            _item['available_balance'] = item['available_balance']
+            self._update([_item])
 
-    def _onresponse(self, data: dict):
-        keys = ['wallet_balance', 'available_balance']
-        self._onmessage([{k: data[k] for k in keys}])
+    def _onposition(self, data: List[Item]) -> None:
+        if len(data) and 'position_idx' in data[0]:
+            for item in data:
+                _item = {}
+                symbol: str = item['symbol']
+                if symbol.endswith('USD'):
+                    _item['coin'] = symbol[:-3] # ex:'BTCUSD'
+                else:
+                    _item['coin'] = symbol[:-6] # ex:'BTCUSDM21'
+                _item['wallet_balance'] = item['wallet_balance']
+                _item['available_balance'] = item['available_balance']
+                self._update([_item])
 
-    def _onmessage(self, data: List[dict]):
+    def _onmessage(self, data: List[Item]) -> None:
         for item in data:
-            self._data.update(item)
+            _item = {}
+            _item['coin'] = 'USDT'
+            _item['wallet_balance'] = item['wallet_balance']
+            _item['available_balance'] = item['available_balance']
+            self._update([item])

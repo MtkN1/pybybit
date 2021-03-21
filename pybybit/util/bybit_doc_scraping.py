@@ -10,9 +10,10 @@ import requests
 urls = {
     'Inverse': 'https://bybit-exchange.github.io/docs/inverse',
     'Linear': 'https://bybit-exchange.github.io/docs/linear',
+    'Futures': 'https://bybit-exchange.github.io/docs/inverse_futures',
 }
 
-rm_pathname = ['v2', 'linear']
+rm_pathname = ['v2', 'linear', 'futures']
 repl_pathname = {'open-api': 'private'}
 
 type_mapping = {
@@ -118,7 +119,7 @@ text = ''
 text += '## メソッド名⇔エンドポイント名 対応表\n'
 for cont in table:
     text += f'### {cont}\n'
-    header = ['Function Name', 'Http Method', 'Endpoint URL', 'Description', ]
+    header = ['Method Name', 'Http Method', 'Endpoint URL', 'Description', ]
     text += f"| {' | '.join(header)} |\n"
     text += f"| {' | '.join(['---'] * len(header))} |\n"
     for row in table[cont]:
