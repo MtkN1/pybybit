@@ -1,5 +1,6 @@
 import json
 import urllib.parse
+from threading import Event
 from typing import Any, Dict, List, Optional, Union
 from requests import Response, Session
 from websocket import WebSocket
@@ -16,6 +17,7 @@ class DataStore:
         self.order = Order()
         self.stoporder = StopOrder()
         self.wallet = Wallet()
+        self._events: List[Event] = []
 
     def onresponse(self, resp: Response, session: Session) -> None:
         content: Dict[str, Any] = resp.json()
@@ -50,41 +52,45 @@ class DataStore:
 
     def onmessage(self, msg: str, ws: WebSocket) -> None:
         content: Dict[str, Any] = json.loads(msg)
-        try:
-            if 'topic' in content:
-                topic: str = content['topic']
-                data: Union[List[Item], Item] = content['data']
-                type_: Optional[str] = content.get('type')
-                if any([
-                    topic.startswith('orderBookL2_25'),
-                    topic.startswith('orderBook_200'),
-                ]):
-                    self.orderbook._onmessage(type_, data)
-                elif topic.startswith('trade'):
-                    self.trade._onmessage(data)
-                elif topic.startswith('insurance'):
-                    self.insurance._onmessage(data)
-                elif topic.startswith('instrument_info'):
-                    self.instrument._onmessage(type_, data)
-                if any([
-                    topic.startswith('klineV2'),
-                    topic.startswith('candle'),
-                ]):
-                    self.kline._onmessage(topic, data)
-                elif topic == 'position':
-                    self.position._onmessage(data)
-                    self.wallet._onposition(data)
-                elif topic == 'execution':
-                    self.execution._onmessage(data)
-                elif topic == 'order':
-                    self.order._onmessage(data)
-                elif topic == 'stop_order':
-                    self.stoporder._onmessage(data)
-                elif topic == 'wallet':
-                    self.wallet._onmessage(data)
-        except Exception as e:
-            print(content)
-            raise e
+        if 'topic' in content:
+            topic: str = content['topic']
+            data: Union[List[Item], Item] = content['data']
+            type_: Optional[str] = content.get('type')
+            if any([
+                topic.startswith('orderBookL2_25'),
+                topic.startswith('orderBook_200'),
+            ]):
+                self.orderbook._onmessage(type_, data)
+            elif topic.startswith('trade'):
+                self.trade._onmessage(data)
+            elif topic.startswith('insurance'):
+                self.insurance._onmessage(data)
+            elif topic.startswith('instrument_info'):
+                self.instrument._onmessage(type_, data)
+            if any([
+                topic.startswith('klineV2'),
+                topic.startswith('candle'),
+            ]):
+                self.kline._onmessage(topic, data)
+            elif topic == 'position':
+                self.position._onmessage(data)
+                self.wallet._onposition(data)
+            elif topic == 'execution':
+                self.execution._onmessage(data)
+            elif topic == 'order':
+                self.order._onmessage(data)
+            elif topic == 'stop_order':
+                self.stoporder._onmessage(data)
+            elif topic == 'wallet':
+                self.wallet._onmessage(data)
+            for event in self._events:
+                event.set()
+            self._events.clear()
+
+    def wait(self) -> None:
+        event = Event()
+        self._events.append(event)
+        event.wait()
 
 class DefaultDataStore(DataStore): ...
 
@@ -96,6 +102,7 @@ class _KeyValueStore:
 
     def __init__(self) -> None:
         self._data: Dict[str, Item] = {}
+        self._events: List[Event] = []
     
     def get(self, **kwargs) -> Optional[Item]:
         try:
@@ -130,6 +137,9 @@ class _KeyValueStore:
         else:
             return list(self._data.values())
 
+    def __len__(self):
+        return len(self._data)
+
     def _dumps(self, item: Item) -> str:
         keyitem = {k: item[k] for k in self._KEYS}
         return urllib.parse.urlencode(keyitem)
@@ -156,6 +166,9 @@ class _KeyValueStore:
                         break
                 for k in keys:
                     self._data.pop(k)
+        for event in self._events:
+            event.set()
+        self._events.clear()
 
     def _pop(self, items: List[Item]) -> None:
         for item in items:
@@ -165,6 +178,14 @@ class _KeyValueStore:
                     self._data.pop(key)
             except KeyError:
                 pass
+        for event in self._events:
+            event.set()
+        self._events.clear()
+
+    def wait(self) -> None:
+        event = Event()
+        self._events.append(event)
+        event.wait()
 
 class OrderBook(_KeyValueStore):
     _KEYS = ['symbol', 'id', 'side']
