@@ -107,7 +107,8 @@ class _KeyValueStore:
     def get(self, **kwargs) -> Optional[Item]:
         try:
             dumps = self._dumps(kwargs)
-            return self._data[dumps]
+            if dumps in self._data:
+                return self._data[dumps]
         except KeyError:
             if kwargs:
                 for item in self._data.values():
