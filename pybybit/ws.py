@@ -24,7 +24,7 @@ class WebScoketAPI:
     _WALLET = 'wallet'
     _PUBLIC_TOPICS = [_ORDERBOOKL2_25, _ORDERBOOK_200, _TRADE, _INSTRUMENT_INFO, _KLINEV2, _CANDLE]
     _PRIVATE_TOPICS = [_POSITION, _EXECUTION, _ORDER, _STOPORDER, _WALLET]
-    _HEARTBEAT_SEC = 60.0
+    _HEARTBEAT_SEC = 30.0
     _MINRECONECT_SEC = 60.0
 
     def __init__(self, auth, testnet) -> None:
@@ -40,16 +40,20 @@ class WebScoketAPI:
     def _onmessage(self, ws: websocket.WebSocket) -> None:
         Thread(target=self._heartbeat, args=[ws], daemon=True).start()
         while True:
-            msg: str = ws.recv()
-            for cb in self._callbacks:
-                cb(msg, ws)
+            try:
+                msg: str = ws.recv()
+            except Exception:
+                break
+            else:
+                for cb in self._callbacks:
+                    cb(msg, ws)
 
     def _heartbeat(self, ws: websocket.WebSocket) -> None:
         while True:
             time.sleep(self._HEARTBEAT_SEC)
             try:
                 ws.send('{"op":"ping"}')
-            except BrokenPipeError:
+            except Exception:
                 break
 
     def _loop(self, wsurl: str, topics: list) -> None:
@@ -62,10 +66,6 @@ class WebScoketAPI:
                 ws = websocket.create_connection(wsurl)
                 self._subscribe(topics, ws)
                 self._onmessage(ws)
-            except websocket.WebSocketException:
-                pass
-            except ConnectionResetError:
-                pass
             except KeyboardInterrupt:
                 break
             time.sleep(max(self._MINRECONECT_SEC - (time.time() - t), 0))
