@@ -1080,7 +1080,7 @@ class Linear:
         order_id: str=None,
         order_link_id: str=None,
         symbol: str=None,
-        p_r_qty: int=None,
+        p_r_qty: str=None,
         p_r_price: float=None,
         take_profit: float=None,
         stop_loss: float=None,
@@ -1230,7 +1230,7 @@ class Linear:
         stop_order_id: str=None,
         order_link_id: str=None,
         symbol: str=None,
-        p_r_qty: int=None,
+        p_r_qty: str=None,
         p_r_price: float=None,
         p_r_trigger_price: float=None,
         take_profit: float=None,
@@ -1906,6 +1906,7 @@ class Futures:
     def private_position_switchisolated(
         self,
         symbol: str=None,
+        position_idx: int=None,
         is_isolated: bool=None,
         buy_leverage: float=None,
         sell_leverage: float=None,
@@ -1917,6 +1918,7 @@ class Futures:
         path = '/futures/private/position/switch-isolated'
         query = {
             'symbol': symbol,
+            'position_idx': position_idx,
             'is_isolated': is_isolated,
             'buy_leverage': buy_leverage,
             'sell_leverage': sell_leverage,
