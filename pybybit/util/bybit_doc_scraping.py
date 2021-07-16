@@ -11,6 +11,7 @@ urls = {
     'Inverse': 'https://bybit-exchange.github.io/docs/inverse',
     'Linear': 'https://bybit-exchange.github.io/docs/linear',
     'Futures': 'https://bybit-exchange.github.io/docs/inverse_futures',
+    # 'Spot': 'https://bybit-exchange.github.io/docs/spot',
 }
 
 rm_pathname = ['v2', 'linear', 'futures']
@@ -50,6 +51,8 @@ with open('bybit_doc_scraping.txt', 'w') as f:
                 if element.name in {'h1', 'h2', 'h3', }:
                     # changed section
                     if method and path:
+                        if path[0] != '/':
+                            path = '/' + path
                         p_list = path[1:].split('/')
                         for rm in rm_pathname:
                             if rm in p_list:

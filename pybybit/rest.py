@@ -76,7 +76,7 @@ class Inverse:
         symbol: str=None,
     ) -> requests.Response:
         """
-        Orderbook
+        Order book
         """
         method = 'GET'
         path = '/v2/public/orderBook/L2'
@@ -293,6 +293,8 @@ class Inverse:
         time_in_force: str=None,
         take_profit: float=None,
         stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
         reduce_only: bool=None,
         close_on_trigger: bool=None,
         order_link_id: str=None,
@@ -311,6 +313,8 @@ class Inverse:
             'time_in_force': time_in_force,
             'take_profit': take_profit,
             'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
             'reduce_only': reduce_only,
             'close_on_trigger': close_on_trigger,
             'order_link_id': order_link_id,
@@ -378,6 +382,10 @@ class Inverse:
         symbol: str=None,
         p_r_qty: str=None,
         p_r_price: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Replace Active Order
@@ -390,6 +398,10 @@ class Inverse:
             'symbol': symbol,
             'p_r_qty': p_r_qty,
             'p_r_price': p_r_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -424,6 +436,10 @@ class Inverse:
         trigger_by: str=None,
         close_on_trigger: bool=None,
         order_link_id: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Place Conditional Order
@@ -442,6 +458,10 @@ class Inverse:
             'trigger_by': trigger_by,
             'close_on_trigger': close_on_trigger,
             'order_link_id': order_link_id,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -507,6 +527,10 @@ class Inverse:
         p_r_qty: int=None,
         p_r_price: str=None,
         p_r_trigger_price: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Replace Conditional Order
@@ -520,6 +544,10 @@ class Inverse:
             'p_r_qty': p_r_qty,
             'p_r_price': p_r_price,
             'p_r_trigger_price': p_r_trigger_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -580,6 +608,8 @@ class Inverse:
         tp_trigger_by: str=None,
         sl_trigger_by: str=None,
         new_trailing_active: float=None,
+        sl_size: float=None,
+        tp_size: float=None,
     ) -> requests.Response:
         """
         Set Trading-Stop
@@ -594,6 +624,8 @@ class Inverse:
             'tp_trigger_by': tp_trigger_by,
             'sl_trigger_by': sl_trigger_by,
             'new_trailing_active': new_trailing_active,
+            'sl_size': sl_size,
+            'tp_size': tp_size,
         }
         return self._request(method, path, query, private=True)
 
@@ -661,7 +693,43 @@ class Inverse:
         }
         return self._request(method, path, query, private=True)
 
-    def private_wallet_risklimit_list(
+    def private_tpsl_switchmode(
+        self,
+        symbol: str=None,
+        tp_sl_mode: str=None,
+    ) -> requests.Response:
+        """
+        Full/Partial Position SL/TP Switch
+        """
+        method = 'POST'
+        path = '/v2/private/tpsl/switch-mode'
+        query = {
+            'symbol': symbol,
+            'tp_sl_mode': tp_sl_mode,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_switchisolated(
+        self,
+        symbol: str=None,
+        is_isolated: bool=None,
+        buy_leverage: float=None,
+        sell_leverage: float=None,
+    ) -> requests.Response:
+        """
+        Cross/Isolated Margin Switch
+        """
+        method = 'POST'
+        path = '/v2/private/position/switch-isolated'
+        query = {
+            'symbol': symbol,
+            'is_isolated': is_isolated,
+            'buy_leverage': buy_leverage,
+            'sell_leverage': sell_leverage,
+        }
+        return self._request(method, path, query, private=True)
+
+    def public_risklimit_list(
         self,
         symbol: str=None,
     ) -> requests.Response:
@@ -669,13 +737,13 @@ class Inverse:
         Get Risk Limit
         """
         method = 'GET'
-        path = '/open-api/wallet/risk-limit/list'
+        path = '/v2/public/risk-limit/list'
         query = {
             'symbol': symbol,
         }
-        return self._request(method, path, query, private=True)
+        return self._request(method, path, query, private=False)
 
-    def private_wallet_risklimit(
+    def private_position_risklimit(
         self,
         symbol: str=None,
         risk_id: int=None,
@@ -684,7 +752,7 @@ class Inverse:
         Set Risk Limit
         """
         method = 'POST'
-        path = '/open-api/wallet/risk-limit'
+        path = '/v2/private/position/risk-limit'
         query = {
             'symbol': symbol,
             'risk_id': risk_id,
@@ -1554,11 +1622,13 @@ class Futures:
         qty: int=None,
         price: float=None,
         time_in_force: str=None,
-        take_profit: float=None,
-        stop_loss: float=None,
         reduce_only: bool=None,
         close_on_trigger: bool=None,
         order_link_id: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Place Active Order
@@ -1573,11 +1643,13 @@ class Futures:
             'qty': qty,
             'price': price,
             'time_in_force': time_in_force,
-            'take_profit': take_profit,
-            'stop_loss': stop_loss,
             'reduce_only': reduce_only,
             'close_on_trigger': close_on_trigger,
             'order_link_id': order_link_id,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -1642,6 +1714,10 @@ class Futures:
         symbol: str=None,
         p_r_qty: str=None,
         p_r_price: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Replace Active Order
@@ -1654,6 +1730,10 @@ class Futures:
             'symbol': symbol,
             'p_r_qty': p_r_qty,
             'p_r_price': p_r_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -1689,6 +1769,10 @@ class Futures:
         trigger_by: str=None,
         close_on_trigger: bool=None,
         order_link_id: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Place Conditional Order
@@ -1708,6 +1792,10 @@ class Futures:
             'trigger_by': trigger_by,
             'close_on_trigger': close_on_trigger,
             'order_link_id': order_link_id,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -1773,6 +1861,10 @@ class Futures:
         p_r_qty: int=None,
         p_r_price: str=None,
         p_r_trigger_price: str=None,
+        take_profit: float=None,
+        stop_loss: float=None,
+        tp_trigger_by: str=None,
+        sl_trigger_by: str=None,
     ) -> requests.Response:
         """
         Replace Conditional Order
@@ -1786,6 +1878,10 @@ class Futures:
             'p_r_qty': p_r_qty,
             'p_r_price': p_r_price,
             'p_r_trigger_price': p_r_trigger_price,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'tp_trigger_by': tp_trigger_by,
+            'sl_trigger_by': sl_trigger_by,
         }
         return self._request(method, path, query, private=True)
 
@@ -1849,6 +1945,8 @@ class Futures:
         tp_trigger_by: str=None,
         sl_trigger_by: str=None,
         new_trailing_active: float=None,
+        sl_size: float=None,
+        tp_size: float=None,
     ) -> requests.Response:
         """
         Set Trading-Stop
@@ -1864,13 +1962,14 @@ class Futures:
             'tp_trigger_by': tp_trigger_by,
             'sl_trigger_by': sl_trigger_by,
             'new_trailing_active': new_trailing_active,
+            'sl_size': sl_size,
+            'tp_size': tp_size,
         }
         return self._request(method, path, query, private=True)
 
     def private_position_leverage_save(
         self,
         symbol: str=None,
-        position_idx: int=None,
         buy_leverage: float=None,
         sell_leverage: float=None,
     ) -> requests.Response:
@@ -1881,7 +1980,6 @@ class Futures:
         path = '/futures/private/position/leverage/save'
         query = {
             'symbol': symbol,
-            'position_idx': position_idx,
             'buy_leverage': buy_leverage,
             'sell_leverage': sell_leverage,
         }
@@ -1903,10 +2001,25 @@ class Futures:
         }
         return self._request(method, path, query, private=True)
 
+    def private_tpsl_switchmode(
+        self,
+        symbol: str=None,
+        tp_sl_mode: str=None,
+    ) -> requests.Response:
+        """
+        Full/Partial Position SL/TP Switch
+        """
+        method = 'POST'
+        path = '/futures/private/tpsl/switch-mode'
+        query = {
+            'symbol': symbol,
+            'tp_sl_mode': tp_sl_mode,
+        }
+        return self._request(method, path, query, private=True)
+
     def private_position_switchisolated(
         self,
         symbol: str=None,
-        position_idx: int=None,
         is_isolated: bool=None,
         buy_leverage: float=None,
         sell_leverage: float=None,
@@ -1918,7 +2031,6 @@ class Futures:
         path = '/futures/private/position/switch-isolated'
         query = {
             'symbol': symbol,
-            'position_idx': position_idx,
             'is_isolated': is_isolated,
             'buy_leverage': buy_leverage,
             'sell_leverage': sell_leverage,
@@ -1970,6 +2082,24 @@ class Futures:
             'exec_type': exec_type,
             'page': page,
             'limit': limit,
+        }
+        return self._request(method, path, query, private=True)
+
+    def private_position_risklimit(
+        self,
+        symbol: str=None,
+        risk_id: int=None,
+        position_idx: int=None,
+    ) -> requests.Response:
+        """
+        Set Risk Limit
+        """
+        method = 'POST'
+        path = '/futures/private/position/risk-limit'
+        query = {
+            'symbol': symbol,
+            'risk_id': risk_id,
+            'position_idx': position_idx,
         }
         return self._request(method, path, query, private=True)
 
