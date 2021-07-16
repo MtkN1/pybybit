@@ -8,5 +8,5 @@ from .rest import RESTAPI
 from .ws import WebScoketAPI
 from .util.store import DataStore
 
-__VERSION__ = '2.0.3'
-__API_VERSION__ = '2021-04-14'
+__VERSION__ = '2.0.4'
+__API_VERSION__ = '2021-06-18'
